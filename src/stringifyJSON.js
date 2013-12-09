@@ -12,7 +12,9 @@ var stringifyJSON = function (obj) {
 		return null;
 	} else if (typeof(obj) === 'string'){
 		return '\"'+obj+'\"';
-	} else if(Array.isArray(obj)) {
+	} else if (obj == 'undefined'){
+        return ;
+    } else if(Array.isArray(obj)) {
 		if (obj.length === 0) {
 			return '[]';            
 		} 
@@ -45,15 +47,16 @@ var stringifyJSON = function (obj) {
             } else {
                 sub = sub +",";
             }
-            index = '"' + index + '":';
-    	    ans= ans + index + sub;
+            if (stringifyJSON(value)!== undefined){
+                index = '"' + index + '":';
+    	       ans= ans + index + sub;
     	    
-            counter++;
+                counter++;}
 		})
         
         return ("{" + ans + "}");
 	} else {
-		return "";
+		return ;
 	}
 };
 
