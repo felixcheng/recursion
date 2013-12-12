@@ -3,121 +3,120 @@
 
 // but you're not, so you'll write it from scratch:
 
-var parseJSON = function (json) {
-
-	//convert the json object into an array, using comma as seperator
-	var seg = json.split(",")
-	var ans;
+var parseJSON = function(json) {
+	var seg = json.split("");
+	var ans; 
 
 	//helper function to parse the array
-	var parsing =  function (seg){
-		var l2;
-		for (var i in seg){
-			if ((seg[i][0]) === ' '){
-				seg[i][0] = seg[i][0].slice(1, seg.length);
-		} 
+	var parsing = function(seg){
 
-			if ((seg[i][0]) === '['){
-				// put all the segs in the array into a variable, pass this variable into parsing (need to delete the '[' & ']'?)
-				var segArr = [];
-				var n = 0;
-				var bracket = 0;
-				var inArr = true;
-				while (inArr) {
-					if ((seg[i][0]) === '[' && bracket ==0) {
-						seg[i][0] = seg[i][0].slice(1);
-						bracket++;
-					} else if ((seg[i][0]) === '['){
-						bracket++;
-					}
+		var parsingString = function(seg){
+			seg = seg.slice(1, seg.length -1);
+			return (seg+"");
+		}
 
-					if (seg[i+n][seg[i+n].length - 1] == ']' && bracket == 1) {
-
-						seg[i+n][seg[i+n]] = seg[i+n][seg[i+n]].slice(0, seg[i+n][seg[i+n].length - 1].length - 1); 
-						inArr = false;
-					} else if (seg[i+n][seg[i+n].length - 1] == ']'){
-						bracket--;
-					}
-					segArr.push(seg[i+n]);
-
-					n++;
-					
-				}
-				l2 = parsing(segArr);
-				i = i + n - 1; //to adjust the index to prevent the seg being parsed again
-			}	
-
-		else if ((seg[i][0]) === '{'){
-			l2 = {};
-			var segArr = [];
-			var n = 0;
-			var bracket = 0;
-			var inArr = true;
-			while (inArr) {
-				if ((seg[i][0]) === '{' && bracket ==0) {
-					seg[i][0] = seg[i][0].slice(1);
-					bracket++;
-				} else if ((seg[i][0]) === '{'){
-					bracket++;
-				}
-
-				if (seg[i+n][seg[i+n].length - 1] == '}' && bracket == 1) {
-					seg[i+n][seg[i+n]] = seg[i+n][seg[i+n]].slice(0, seg[i+n][seg[i+n].length - 1].length - 1); 
-					inArr = false;
-				} else if (seg[i+n][seg[i+n].length - 1] == '}'){
-					bracket--;
-				}
-				segArr.push(seg[i+n]);
-
-				n++;
-					
+		var parsingNum = function(seg){
+			if(seg.length > 1) {
+				seg = seg.join("");
 			}
-			_.each(segArr, function(value){
-				var ind = value.indexOf(':');
-				var firstH = value.slice(0, ind);
-				var secondH = value.slice(ind+1, value.length);
-				l2[firstH] = parsing(secondH);
+			seg = +seg;
+			return seg;
+		}
+
+		var parsingSpecial = function(seg){
+			switch(seg[0]){
+				case "t":
+					return true;
+				case "f":
+					return false;
+				case "u":
+					return undefined;
+				case "n":
+					return null;
+			}
+		}
+
+
+		var parsingArr = function(seg){
+			var arr = [];
+			seg = seg.slice(1, seg.length -1);
+			var brack = 0;
+			var curly = 0;
+			var inner = [];
+			var innerO = "";
+			var ele = "";
+
+			_.each(seg, function(value, id){
+				if (value === '[' && curly === 0){
+					if (brack ===0){
+						inner = [];
+					}
+					brack++;
+				}
+
+				if (value === '{' && brack === 0){
+					if (curly ===0){
+						innerO = "";
+					}
+					brack++;
+				}
+
+
+
+				
+				if (brack > 0){
+					inner.push(value);
+				} else {
+					if(value != ','){
+						ele = ele + value;
+            if (id == seg.length-1){
+              arr.push(ele);
+						  ele = "";
+          }}	else {
+						arr.push(ele);
+						ele = "";
+					}
+				}
+
+				if (value === ']'){
+						brack--;
+					if (brack === 0){
+						arr.push(inner.join(""));
+					}
+				}
 			})
 
-		} 
-
-		else if (/\d/.test(seg[i][0])){
-			l2 = +seg[i][0];
+    	for (var i = 0 ; i <arr.length; i++){
+    		arr[i] = parseJSON(arr[i]);
+      }
+			
+			return arr;
 		}
 
-		else if ((seg[0]) === '"'){
-			l2 = seg.slice(1, seg.length - 1);
-		}
 
-		else if ((seg[i][0]) === 't'){ l2 = true;}
-		else if ((seg[i][0]) === 'f'){ l2 = false;}
-		else if ((seg[i][0]) === 'n'){ l2 = null;}
-		else if ((seg[i][0]) === 'u'){ l2 = undefined;}
-
-		return l2;
-	}}
-
-parsing(seg);
-return ans;
-
-};
-
-
-
-	// passing the array into the parsing func;
-	/*if (tempL.length > 1){
-		if ((tempL[0][0]) === '['){
-			ans = [];
-		} else if ((tempL[0][0]) === '{'){
-			ans = {};
+		var parsingObj = function(seg){
+			return 'hi'; 
 		}
 		
-		tempL[0]= tempL[0].slice(1);
-		tempL[tempL.length - 1] = tempL[tempL.length - 1].slice(0, tempL[tempL.length - 1].length - 1);  //trim out the ']'/'}' for the last element 
-		_.each(tempL, function(value){
-			var ele = parsing(value);
-			ans.push(ele);
-		})
+			if (seg[0] === '['){
+			return parsingArr(seg);
+		} else 	 if (seg[0] === '{'){
+			return parsingObj(seg);
+		} else if (/\d/.test(seg[0])) {
+			return parsingNum(seg);
+		} else if (seg[0] === '"'){
+			return parsingString(seg);
+		} else {
+			return parsingSpecial(seg);
+		}
 
-	} else {
-	return l2};*/
+ 
+	}
+
+	
+	return parsing(seg);
+
+}
+	
+
+	
